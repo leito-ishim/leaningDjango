@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth import get_user_model
+from mptt.models import MPTTModel, TreeForeignKey
 
 # Create your models here.
 
@@ -30,9 +31,12 @@ class Article(models.Model):
     status = models.CharField(choices=STATUS_OPTIONS, default='published', max_length=10, verbose_name='Статус поста')
     time_create = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')
     time_update = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
-    author = models.ForeignKey(to=User, verbose_name='Автор', on_delete=models.SET_DEFAULT, related_name='author_posts', default=1)
-    updater = models.ForeignKey(to=User, verbose_name='Обновил', on_delete=models.SET_NULL, null=True, related_name='updater_posts', blank=True)
+    author = models.ForeignKey(to=User, verbose_name='Автор', on_delete=models.SET_DEFAULT, related_name='author_posts',
+                               default=1)
+    updater = models.ForeignKey(to=User, verbose_name='Обновил', on_delete=models.SET_NULL, null=True,
+                                related_name='updater_posts', blank=True)
     fixed = models.BooleanField(default=False, verbose_name='Зафиксировано')
+    category = TreeForeignKey('Category', verbose_name='Категория', on_delete=models.PROTECT, related_name='articles')
 
     class Meta:
         verbose_name = 'Статья'
@@ -45,4 +49,40 @@ class Article(models.Model):
         return self.title
 
 
+class Category(MPTTModel):
+    """
+    Модель категорий с вложенностью
+    """
 
+    title = models.CharField(verbose_name='Название категории', max_length=255)
+    slug = models.SlugField(verbose_name='URL категории', max_length=255, blank=True)
+    description = models.TextField(verbose_name='Описание категории', max_length=300)
+    parent = TreeForeignKey(
+        'self',
+        verbose_name='родительская категория',
+        null=True,
+        blank=True,
+        related_name='children',
+        on_delete=models.CASCADE,
+        db_index=True,
+    )
+
+    class MPTTMeta:
+        """
+        Сортировка по вложенности
+        """
+        order_insertion_by = ('title',)
+
+    class Meta:
+        """
+        Сортировка, название модели в админ панели, таблица с данными
+        """
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+        db_table = 'app_categories'
+
+    def __str__(self):
+        """
+        Возвращение заголовка статьи
+        """
+        return self.title
