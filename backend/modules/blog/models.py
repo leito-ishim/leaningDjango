@@ -1,7 +1,13 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth import get_user_model
+from django.urls import reverse
+
 from mptt.models import MPTTModel, TreeForeignKey
+
+from modules.services.utils import unique_slugify
+
+
 
 # Create your models here.
 
@@ -25,7 +31,7 @@ class Article(models.Model):
     thumbnail = models.ImageField(
         verbose_name='Превью поста',
         blank=True,
-        upload_to='images/thumbnails/',
+        upload_to='images/thumbnails/%Y/%m/%d/',
         validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'webp', 'jpeg', 'gif'])]
     )
     status = models.CharField(choices=STATUS_OPTIONS, default='published', max_length=10, verbose_name='Статус поста')
@@ -47,6 +53,17 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('articles_detail', kwargs={'slug': self.slug})
+
+    def save(self, *args, **kwargs):
+        """
+        Сохранение полей модели при отсутствии их заполнения
+        """
+        if not self.slug:
+            self.slug = unique_slugify(self, self.title)
+        super().save(*args, **kwargs)
 
 
 class Category(MPTTModel):
@@ -86,3 +103,7 @@ class Category(MPTTModel):
         Возвращение заголовка статьи
         """
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('articles_by_category', kwargs={'slug': self.slug})
+

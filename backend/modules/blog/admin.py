@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from .models import Article, Category
 from mptt.admin import DraggableMPTTAdmin
 
@@ -19,5 +20,7 @@ class CategoryAdmin(DraggableMPTTAdmin):
         ('Описание', {'fields': ('description',)})
     )
 
-
-admin.site.register(Article)
+@admin.register(Article)
+class ArticleAdmin(admin.ModelAdmin):
+    prepopulated_fields = {'slug': ('title',)}
+# admin.site.register(Article)
