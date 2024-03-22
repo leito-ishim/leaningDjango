@@ -1,0 +1,21 @@
+{% extends 'main.html' %}
+
+{% block content %}
+    {% for article in page_obj %}
+    <div class="card mb-3">
+        <div class="row">
+            <div class="col-4">
+                <img src="{{ article.thumbnail.url }}" class="card-img-top" alt="{{ article.title }}">
+            </div>
+            <div class="col-8">
+                <div class="card-body">
+                    <h5 class="card-title">{{ article.title }}</h5>
+                    <div class="card-subtitle">{{ article.author.username }}</div>
+                    <p class="card-text">{{ article.short_description }}</p>
+                    <a href="{% url 'articles_by_category' article.category.slug %}" class="btn btn-primary">{{ article.category.title }}</a>
+                  </div>
+                </div>
+            </div>
+      </div>
+    {% endfor %}
+{% endblock %}

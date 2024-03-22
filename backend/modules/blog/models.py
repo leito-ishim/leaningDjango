@@ -18,6 +18,15 @@ class Article(models.Model):
     """
     Модель постов для сайта
     """
+    class ArticleManager(models.Manager):
+        """
+        Кастомный менеджер для модели статей
+        """
+        def all(self):
+            """
+            Список статей (SQL запрос с фильтрацией для страницы списка статей)
+            """
+            return self.get_queryset().select_related('author', 'category').filter(status='published')
 
     STATUS_OPTIONS = (
         ('published', 'Опубликовано'),
@@ -32,7 +41,7 @@ class Article(models.Model):
         verbose_name='Превью поста',
         blank=True,
         upload_to='images/thumbnails/%Y/%m/%d/',
-        validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'webp', 'jpeg', 'gif'])]
+        validators=[FileExtensionValidator(allowed_extensions=['png', 'jpg', 'webp', 'jpeg', 'gif'])],
     )
     status = models.CharField(choices=STATUS_OPTIONS, default='published', max_length=10, verbose_name='Статус поста')
     time_create = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')
@@ -43,6 +52,8 @@ class Article(models.Model):
                                 related_name='updater_posts', blank=True)
     fixed = models.BooleanField(default=False, verbose_name='Зафиксировано')
     category = TreeForeignKey('Category', verbose_name='Категория', on_delete=models.PROTECT, related_name='articles')
+
+    objects = ArticleManager()
 
     class Meta:
         verbose_name = 'Статья'
