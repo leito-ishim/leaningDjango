@@ -2,6 +2,9 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from .models import Article, Category
 from .forms import ArticleCreateForm, ArticleUpdateForm
 from django.urls import reverse_lazy
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.messages.views import SuccessMessageMixin
+from ..services.mixins import AuthorRequiredMixin
 
 from django.shortcuts import render
 from django.core.paginator import Paginator
@@ -49,13 +52,14 @@ class ArticleByCategoryListView(ListView):
         return context
 
 
-class ArticleCreateView(CreateView):
+class ArticleCreateView(LoginRequiredMixin ,CreateView):
     """
     Представление создание материалов на сайте
     """
     model = Article
     template_name = 'blog/articles_create.html'
     form_class = ArticleCreateForm
+    login_url = 'home'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -68,7 +72,7 @@ class ArticleCreateView(CreateView):
         return super().form_valid(form)
 
 
-class ArticleUpdateView(UpdateView):
+class ArticleUpdateView(AuthorRequiredMixin, SuccessMessageMixin, UpdateView):
     """
     Представление : обновление материала на сайте
     """
@@ -77,6 +81,9 @@ class ArticleUpdateView(UpdateView):
     template_name = 'blog/articles_update.html'
     form_class = ArticleUpdateForm
     context_object_name = 'article'
+    login_url = 'home'
+    success_message = 'Материал успешно обновлен'
+
 
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -89,7 +96,7 @@ class ArticleUpdateView(UpdateView):
         return super().form_valid(form)
 
 
-class ArticleDeleteView(DeleteView):
+class ArticleDeleteView(AuthorRequiredMixin ,DeleteView):
     """
     Представление для удаления статьи
     """
