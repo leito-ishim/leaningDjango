@@ -13,11 +13,11 @@
         {% include 'header.html' %}
         <div class="row">
             <div class="col-8">
-                {% include 'includes/messages.html' %}
-                {% block content %}
+            {% include 'includes/messages.html' %}
+            {% block content %}
 
-                {% endblock %}
-                {% include 'pagination.html' %}
+            {% endblock %}
+            {% include 'pagination.html' %}
             </div>
             <div class="col-4">
                 {% include 'sidebar.html' %}
@@ -25,5 +25,7 @@
         </div>
     </div>
 <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'custom/js/backend.js' %}"></script>
+{% block script %}{% endblock %}
 </body>
 </html>

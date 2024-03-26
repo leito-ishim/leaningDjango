@@ -7,8 +7,6 @@ from mptt.models import MPTTModel, TreeForeignKey
 
 from modules.services.utils import unique_slugify
 
-
-
 # Create your models here.
 
 User = get_user_model()
@@ -18,10 +16,12 @@ class Article(models.Model):
     """
     Модель постов для сайта
     """
+
     class ArticleManager(models.Manager):
         """
         Кастомный менеджер для модели статей
         """
+
         def all(self):
             """
             Список статей (SQL запрос с фильтрацией для страницы списка статей)
@@ -117,4 +117,36 @@ class Category(MPTTModel):
 
     def get_absolute_url(self):
         return reverse('articles_by_category', kwargs={'slug': self.slug})
+
+
+class Comment(MPTTModel):
+    """
+    Модель древовидных комментариев
+    """
+
+    STATUS_OPTIONS = (
+        ('published', 'Опубликовано'),
+        ('draft', 'Черновик')
+    )
+
+    article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='comments', verbose_name='Статья')
+    author = models.ForeignKey(User, verbose_name='Автор комментария', on_delete=models.CASCADE, related_name='comments_author')
+    content = models.TextField(verbose_name='Текст комментария', max_length=3000)
+    time_create = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')
+    time_update = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
+    status = models.CharField(choices=STATUS_OPTIONS, default='published', verbose_name='Статус поста', max_length=10)
+    parent = TreeForeignKey('self', verbose_name='Родительский комментарий', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
+
+    class MTTMeta:
+        order_insertion_by = ('-time_create',)
+
+    class Meta:
+        db_table = 'app_comments'
+        indexes = [models.Index(fields=['-time_create', 'time_update', 'status', 'parent'])]
+        ordering = ['-time_create']
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return f'{self.author}:{self.content}'
 

@@ -1,10 +1,26 @@
 {% extends 'main.html' %}
-
+{% load mptt_tags %}
 {% block content %}
-        <img src={{ article.thumbnail.url }} alt={{ article.title }} width="250"/>
-        <strong>{{ article.title }}</strong>
-        <p>{{ article.full_description }}</p>
-        <small>{{ article.time_create }}</small>
-        <hr>
-        <span>{{ article.category.title }}</span>
+<div class="card mb-3">
+	<div class="row">
+		<div class="col-4">
+			<img src="{{ article.thumbnail.url }}" class="card-img-top" alt="{{ article.title }}" />
+		</div>
+		<div class="col-8">
+			<div class="card-body">
+				<h5>{{ article.title }}</h5>
+				<p class="card-text">{{ article.full_description }}</p>
+				Категория: <a href="{% url 'articles_by_category' article.category.slug %}">{{ article.category.title }}</a> / Добавил: {{ article.author.username }} / <small>{{ article.time_create }}</small>
+			</div>
+		</div>
+	</div>
+</div>
+<div class="card border-0">
+	<div class="card-body">
+		<h5 class="card-title">
+			Комментарии
+		</h5>
+		{% include 'blog/comments/comments_list.html' %}
+	</div>
+</div>
 {% endblock %}
