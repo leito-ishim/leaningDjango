@@ -1,60 +1,51 @@
-<header>
-    <div class="px-3 py-2 text-bg-dark">
-      <div class="container">
-        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
-          <a href="/" class="d-flex align-items-center my-2 my-lg-0 me-lg-auto text-white text-decoration-none">
-            <svg class="bi me-2" width="40" height="32" role="img" aria-label="Bootstrap"><use xlink:href="#bootstrap"></use></svg>
-          </a>
+<header class="mt-3">
+  <div class="px-3 py-2 text-bg-dark" style="border-radius: 10px 10px 0 0;">
+    <div class="container">
+      <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-lg-start">
+        <a href="/" class="d-flex align-items-center my-2 my-lg-0 me-lg-auto text-white text-decoration-none">
+          <img width="64" src="https://cdn-icons-png.flaticon.com/512/8277/8277654.png"/>
+        </a>
 
-          <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small">
-            <li>
-              <a href="#" class="nav-link text-secondary">
-                <svg class="bi d-block mx-auto mb-1" width="24" height="24"><use xlink:href="#home"></use></svg>
-                Home
-              </a>
-            </li>
-            <li>
-              <a href="#" class="nav-link text-white">
-                <svg class="bi d-block mx-auto mb-1" width="24" height="24"><use xlink:href="#speedometer2"></use></svg>
-                Dashboard
-              </a>
-            </li>
-            <li>
-              <a href="#" class="nav-link text-white">
-                <svg class="bi d-block mx-auto mb-1" width="24" height="24"><use xlink:href="#table"></use></svg>
-                Orders
-              </a>
-            </li>
-            <li>
-              <a href="#" class="nav-link text-white">
-                <svg class="bi d-block mx-auto mb-1" width="24" height="24"><use xlink:href="#grid"></use></svg>
-                Products
-              </a>
-            </li>
-            <li>
-              <a href="#" class="nav-link text-white">
-                <svg class="bi d-block mx-auto mb-1" width="24" height="24"><use xlink:href="#people-circle"></use></svg>
-                Customers
-              </a>
-            </li>
-          </ul>
-        </div>
+        <ul class="nav col-12 col-lg-auto my-2 justify-content-center my-md-0 text-small">
+          <li>
+            <a href="{% url "home" %}" class="nav-link text-secondary">
+              <svg class="bi d-block mx-auto mb-1" width="24" height="24"><use xlink:href="#home"></use></svg>
+              Главная
+            </a>
+          </li>
+          <li>
+            <a href="{% url "articles_create" %}" class="nav-link text-white">
+              <svg class="bi d-block mx-auto mb-1" width="24" height="24"><use xlink:href="#speedometer2"></use></svg>
+              Добавить статью
+            </a>
+          </li>
+        </ul>
+
       </div>
     </div>
-    <div class="px-3 py-2 border-bottom mb-3">
-      <div class="container d-flex flex-wrap justify-content-center">
-        <form class="col-12 col-lg-auto mb-2 mb-lg-0 me-lg-auto" role="search">
-          <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
-        </form>
-
-        <div class="text-end">
-          <button type="button" class="btn btn-light text-dark me-2">Login</button>
-          <button type="button" class="btn btn-primary">Sign-up</button>
-          <form method="post" action="{% url 'logout' %}">
+  </div>
+  <div class="px-3 py-2 bg-light mb-3" style="border-radius: 0 0 10px 10px;">
+    <div class="container d-flex flex-wrap justify-content-center">
+      <form class="col-12 col-lg-auto mb-2 mb-lg-0 me-lg-auto" role="search">
+        <input type="search" class="form-control" placeholder="Search..." aria-label="Search">
+      </form>
+      {% if request.user.is_authenticated %}
+        <a href="{% url "profile_detail" request.user.profile.slug %}" type="button" class="btn btn-secondary me-2"> {{ request.user.username }}</a>
+        <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}
-              <button type="submit" class="btn btn-primary">logout</button>
+              <button type="submit" class="btn btn-primary">Деавторизация</button>
           </form>
-        </div>
+<!--      <a href="{% url "logout" %}" type="button" class="btn btn-primary">Деавторизация</a>-->
+      {% else %}
+      <div class="text-end">
+        <a href="{% url "login" %}" type="button" class="btn btn-light text-dark me-2">Авторизация</a>
+        <a href="{% url "register" %}" type="button" class="btn btn-primary">Регистрация</a>
       </div>
+      {% endif %}
     </div>
-  </header>
+  </div>
+</header>
+
+
+
+

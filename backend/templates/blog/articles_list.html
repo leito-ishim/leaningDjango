@@ -9,10 +9,11 @@
             </div>
             <div class="col-8">
                 <div class="card-body">
-                    <h5 class="card-title">{{ article.title }}</h5>
-                    <div class="card-subtitle">{{ article.author.username }}</div>
+                    <h5 class="card-title"><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></h5>
                     <p class="card-text">{{ article.short_description }}</p>
-                    <a href="{% url 'articles_by_category' article.category.slug %}" class="btn btn-primary">{{ article.category.title }}</a>
+                    </hr>
+                    Категория: <a href="{% url 'articles_by_category' article.category.slug %}">{{ article.category.title }}</a>
+                    / Добавил: {{ article.author.username }}
                   </div>
                 </div>
             </div>

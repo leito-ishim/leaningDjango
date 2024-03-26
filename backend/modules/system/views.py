@@ -83,6 +83,7 @@ class UserRegisterView(UserIsNotAuthenticated, CreateView):
     form_class = UserRegisterForm
     success_url = reverse_lazy('home')
     template_name = 'system/registration/user_register.html'
+
     # success_message = 'Вы успешно зарегистрировались. Можете войти на сайт!'
 
     def get_context_data(self, **kwargs):
@@ -189,6 +190,7 @@ class UserConfirmEmailView(View):
     """
     Представление для обработки токена и подтверждения пользователя
     """
+
     def get(selfself, request, uidb64, token):
         try:
             uid = urlsafe_base64_decode(uidb64)
@@ -221,6 +223,7 @@ class EmailConfirmedView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Ваш электронный адрес активирован'
         return context
+
 
 class EmailConfirmationFailedView(TemplateView):
     template_name = 'system/registration/email_confirmation_failed.html'
