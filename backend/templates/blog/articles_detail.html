@@ -1,5 +1,5 @@
 {% extends 'main.html' %}
-{% load mptt_tags %}
+{% load mptt_tags static %}
 {% block content %}
 <div class="card mb-3 border-0 shadow-sm">
 	<div class="row">
@@ -9,7 +9,7 @@
 		<div class="col-8">
 			<div class="card-body">
 				<h5>{{ article.title }}</h5>
-				<p class="card-text">{{ article.full_description }}</p>
+				<p class="card-text">{{ article.full_description|safe }}</p>
 				Категория: <a href="{% url 'articles_by_category' article.category.slug %}">{{ article.category.title }}</a> / Добавил: {{ article.author.username }} / <small>{{ article.time_create }}</small>
 			</div>
 		</div>
@@ -19,6 +19,11 @@
 		Теги записи: {% for tag in article.tags.all %} <a href="{% url 'articles_by_tags' tag.slug %}">{{ tag }}</a>, {% endfor %}
 	</div>
 	{% endif %}
+	<div class="rating-buttons">
+		<button class="btn btn-sm btn-primary" data-article="{{ article.id }}" data-value="1">Лайк</button>
+		<button class="btn btn-sm btn-secondary" data-article="{{ article.id }}" data-value="-1">Дизлайк</button>
+		<button class="btn btn-sm btn-secondary rating-sum">{{ article.get_sum_rating }}</button>
+	</div>
 </div>
 <div class="card border-0">
 	<div class="card-body">
@@ -29,6 +34,10 @@
 	</div>
 </div>
 {% endblock %}
+
+{% block script %}
+<script src="{% static 'custom/js/ratings.js' %}"></script>
+{% endblock%}
 
 {% block sidebar %}
 <div class="card mb-2 border-0">
