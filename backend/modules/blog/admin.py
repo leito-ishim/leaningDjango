@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Article, Category, Comment
+from .models import Article, Category, Comment, Rating
 from mptt.admin import DraggableMPTTAdmin
 
 
@@ -40,3 +40,9 @@ class CommentAdminPage(DraggableMPTTAdmin):
     list_display_links = ('article',)
     list_filter = ('time_create', 'time_update', 'author')
     list_editable = ('status',)
+
+
+@admin.register(Rating)
+class RatingAdminPage(admin.ModelAdmin):
+    list_display = ('article', 'user', 'value', 'time_create')
+
