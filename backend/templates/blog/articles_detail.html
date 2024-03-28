@@ -1,7 +1,7 @@
 {% extends 'main.html' %}
 {% load mptt_tags %}
 {% block content %}
-<div class="card mb-3">
+<div class="card mb-3 border-0 shadow-sm">
 	<div class="row">
 		<div class="col-4">
 			<img src="{{ article.thumbnail.url }}" class="card-img-top" alt="{{ article.title }}" />
@@ -14,6 +14,11 @@
 			</div>
 		</div>
 	</div>
+	{% if article.tags.all %}
+	<div class="card-footer border-0">
+		Теги записи: {% for tag in article.tags.all %} <a href="{% url 'articles_by_tags' tag.slug %}">{{ tag }}</a>, {% endfor %}
+	</div>
+	{% endif %}
 </div>
 <div class="card border-0">
 	<div class="card-body">
@@ -22,5 +27,22 @@
 		</h5>
 		{% include 'blog/comments/comments_list.html' %}
 	</div>
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div class="card mb-2 border-0">
+    <div class="card-body">
+        <div class="card-title">
+           Похожие статьи
+        </div>
+        <div class="card-text">
+            <ul class="similar-articles">
+                {% for sim_article in similar_articles %}
+                    <li><a href="{{ sim_article.get_absolute_url }}">{{ sim_article.title }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
 </div>
 {% endblock %}

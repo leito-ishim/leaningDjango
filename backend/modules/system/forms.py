@@ -2,8 +2,11 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, SetPasswordForm, PasswordChangeForm, \
     PasswordResetForm
+from django.conf import settings
+from django_recaptcha.fields import ReCaptchaField
+from django_recaptcha.widgets import ReCaptchaV2Checkbox
 
-from .models import Profile
+from .models import Profile, Feedback
 
 
 class UserUpdateForm(forms.ModelForm):
@@ -66,6 +69,9 @@ class UserRegisterForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         fields = UserCreationForm.Meta.fields + ('email', 'first_name', 'last_name')
 
+    # recaptcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, public_key=settings.RECAPTCHA_PUBLIC_KEY,
+    #                            private_key=settings.RECAPTCHA_PRIVATE_KEY, label='ReCAPTCHA')
+
     def clean_email(self):
         """
         Проверка email на уникальность
@@ -97,6 +103,9 @@ class UserLoginForm(AuthenticationForm):
     Форма авторизации на сайте
     """
 
+    # recaptcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, public_key=settings.RECAPTCHA_PUBLIC_KEY,
+    #                            private_key=settings.RECAPTCHA_PRIVATE_KEY, label='ReCAPTCHA')
+
     def __init__(self, *args, **kwargs):
         """
         Обновление стилей формы регистрации
@@ -114,6 +123,10 @@ class UserPasswordChangeForm(PasswordChangeForm):
     """
     Форма изменения пароля
     """
+
+    # recaptcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, public_key='6Ld39KUpAAAAAPHn2pp9Yk2nrNhX8kJDz3CO5kt2',
+    #                            private_key='6Ld39KUpAAAAAISTYZMbv_pQDWbUC0U840pDmnBX', label='ReCAPTCHA')
+    # captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, label='ReCAPTCHA')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -145,6 +158,27 @@ class UserSetNewPasswordForm(SetPasswordForm):
     """
     Изменение пароля пользователя после подтверждения
     """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Обновление стилей формы
+        """
+        super().__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({
+                'class': 'form-control',
+                'autocomplete': 'off'
+            })
+
+
+class FeedbackCreateForm(forms.ModelForm):
+    """
+    Форма отправки обратной связи
+    """
+
+    class Meta:
+        model = Feedback
+        fields = ('subject', 'email', 'content')
 
     def __init__(self, *args, **kwargs):
         """

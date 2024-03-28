@@ -2,8 +2,10 @@ from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from mptt.fields import TreeManyToManyField
 
 from mptt.models import MPTTModel, TreeForeignKey
+from taggit.managers import TaggableManager
 
 from modules.services.utils import unique_slugify
 
@@ -27,6 +29,16 @@ class Article(models.Model):
             Список статей (SQL запрос с фильтрацией для страницы списка статей)
             """
             return self.get_queryset().select_related('author', 'category').filter(status='published')
+
+        def detail(self):
+            """
+            Детальная статья (SQL запрос с фильтрацией для страницы со статьей)
+            """
+            return self.get_queryset().select_related('author', 'category').prefetch_related('comments',
+                                                                                             'comments__author',
+                                                                                             'comments__author__profile',
+                                                                                             'tags').filter(
+                status='published')
 
     STATUS_OPTIONS = (
         ('published', 'Опубликовано'),
@@ -53,6 +65,7 @@ class Article(models.Model):
     fixed = models.BooleanField(default=False, verbose_name='Зафиксировано')
     category = TreeForeignKey('Category', verbose_name='Категория', on_delete=models.PROTECT, related_name='articles')
 
+    tags = TaggableManager()
     objects = ArticleManager()
 
     class Meta:
@@ -130,12 +143,14 @@ class Comment(MPTTModel):
     )
 
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name='comments', verbose_name='Статья')
-    author = models.ForeignKey(User, verbose_name='Автор комментария', on_delete=models.CASCADE, related_name='comments_author')
+    author = models.ForeignKey(User, verbose_name='Автор комментария', on_delete=models.CASCADE,
+                               related_name='comments_author')
     content = models.TextField(verbose_name='Текст комментария', max_length=3000)
     time_create = models.DateTimeField(auto_now_add=True, verbose_name='Время добавления')
     time_update = models.DateTimeField(auto_now=True, verbose_name='Время обновления')
     status = models.CharField(choices=STATUS_OPTIONS, default='published', verbose_name='Статус поста', max_length=10)
-    parent = TreeForeignKey('self', verbose_name='Родительский комментарий', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
+    parent = TreeForeignKey('self', verbose_name='Родительский комментарий', null=True, blank=True,
+                            related_name='children', on_delete=models.CASCADE)
 
     class MTTMeta:
         order_insertion_by = ('-time_create',)
@@ -149,4 +164,3 @@ class Comment(MPTTModel):
 
     def __str__(self):
         return f'{self.author}:{self.content}'
-
