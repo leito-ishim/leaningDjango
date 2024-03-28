@@ -13,10 +13,12 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView, PasswordResetView, \
     PasswordResetConfirmView
 
-from .models import Profile
+from .models import Profile, Feedback
 from .forms import UserUpdateForm, ProfileUpdateForm, UserRegisterForm, UserLoginForm, UserPasswordChangeForm, \
-    UserForgotPasswordForm, UserSetNewPasswordForm
+    UserForgotPasswordForm, UserSetNewPasswordForm, FeedbackCreateForm
 from ..services.mixins import UserIsNotAuthenticated
+from ..services.email import send_contact_email_message
+from ..services.utils import get_client_ip
 
 # Create your views here.
 
@@ -232,3 +234,21 @@ class EmailConfirmationFailedView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Ваш электронный адрес не активирован'
         return context
+
+
+class FeedbackCreateView(SuccessMessageMixin, CreateView):
+    model = Feedback
+    form_class = FeedbackCreateForm
+    template_name = 'system/feedback.html'
+    success_message = 'Ваше письмо успешно отправлено администрации сайта'
+    extra_context = {'title': 'Контактная форма'}
+    success_url = reverse_lazy('home')
+
+    def form_valid(self, form):
+        if form.is_valid():
+            feedback = form.save(commit=False)
+            feedback.ip_address = get_client_ip(self.request)
+            if self.request.user.is_authenticated:
+                feedback.user = self.request.user
+            send_contact_email_message(feedback.subject, feedback.email, feedback.content, feedback.ip_address, feedback.user_id)
+        return super().form_valid(form)

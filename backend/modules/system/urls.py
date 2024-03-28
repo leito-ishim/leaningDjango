@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import ProfileUpdateView, ProfileDetailView, UserRegisterView, UserLoginView, UserLogoutView, \
     UserPasswordChangeView, UserForgotPasswordView, UserPasswordResetConfirmView, UserConfirmEmailView, \
-    EmailConfirmedView, EmailConfirmationFailedView, EmailConfirmationSentView
+    EmailConfirmedView, EmailConfirmationFailedView, EmailConfirmationSentView, FeedbackCreateView
 
 urlpatterns = [
     path('user/edit/', ProfileUpdateView.as_view(), name='profile_edit'),
@@ -17,5 +17,5 @@ urlpatterns = [
     path('confirm-email/<str:uidb64>/<str:token>/', UserConfirmEmailView.as_view(), name='confirm_email'),
     path('email-confirmed/', EmailConfirmedView.as_view(), name='email_confirmed'),
     path('confirm-email-failed/', EmailConfirmationFailedView.as_view(), name='email_confirmation_failed'),
-
+    path('feedback/', FeedbackCreateView.as_view(), name='feedback'),
 ]

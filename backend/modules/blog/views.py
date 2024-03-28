@@ -3,6 +3,9 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
+from taggit.models import Tag
+import random
+from django.db.models import Count
 
 from ..services.mixins import AuthorRequiredMixin
 from .models import Article, Category, Comment
@@ -28,11 +31,20 @@ class ArticleDetailView(DetailView):
     model = Article
     template_name = 'blog/articles_detail.html'
     context_object_name = 'article'
+    queryset = model.objects.detail()
+
+    def get_similar_articles(self, obj):
+        article_tags_ids = obj.tags.values_list('id', flat=True)
+        similar_articles = Article.objects.filter(tags__in=article_tags_ids).exclude(id=obj.id)
+        similar_articles = similar_articles.annotate(related_tags=Count('tags')).order_by('-related_tags')
+        similar_articles_list = list(similar_articles.all())
+        return similar_articles_list[:6]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = self.object.title
         context['form'] = CommentCreateForm
+        context['similar_articles'] = self.get_similar_articles(self.object)
         return context
 
 
@@ -54,7 +66,7 @@ class ArticleByCategoryListView(ListView):
         return context
 
 
-class ArticleCreateView(LoginRequiredMixin ,CreateView):
+class ArticleCreateView(LoginRequiredMixin, CreateView):
     """
     Представление создание материалов на сайте
     """
@@ -86,7 +98,6 @@ class ArticleUpdateView(AuthorRequiredMixin, SuccessMessageMixin, UpdateView):
     login_url = 'home'
     success_message = 'Материал успешно обновлен'
 
-
     def get_context_data(self, *, object_list=None, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Обновление статьи: {self.object.title}'
@@ -98,7 +109,7 @@ class ArticleUpdateView(AuthorRequiredMixin, SuccessMessageMixin, UpdateView):
         return super().form_valid(form)
 
 
-class ArticleDeleteView(AuthorRequiredMixin ,DeleteView):
+class ArticleDeleteView(AuthorRequiredMixin, DeleteView):
     """
     Представление для удаления статьи
     """
@@ -149,6 +160,23 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
     def handle_no_permission(self):
         return JsonResponse({'error': 'Необходимо авторизироваться для добавления комментариев'}, status=400)
 
+
+class ArticleByTagListView(ListView):
+    model = Article
+    template_name = 'blog/articles_list.html'
+    context_object_name = 'articles'
+    paginate_by = 10
+    tag = None
+
+    def get_queryset(self):
+        self.tag = Tag.objects.get(slug=self.kwargs['tag'])
+        queryset = Article.objects.all().filter(tags__slug=self.tag.slug)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f'Статьи по тегу: {self.tag.name}'
+        return context
 
 # Функция создавалась для реализации пагинации через функции. Сейчас не нужна, пагинация реализована в классах
 # def articles_list(request):
