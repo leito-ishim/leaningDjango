@@ -124,9 +124,6 @@ class UserPasswordChangeForm(PasswordChangeForm):
     Форма изменения пароля
     """
 
-    # recaptcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, public_key='6Ld39KUpAAAAAPHn2pp9Yk2nrNhX8kJDz3CO5kt2',
-    #                            private_key='6Ld39KUpAAAAAISTYZMbv_pQDWbUC0U840pDmnBX', label='ReCAPTCHA')
-    # captcha = ReCaptchaField(widget=ReCaptchaV2Checkbox, label='ReCAPTCHA')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
