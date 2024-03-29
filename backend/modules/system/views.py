@@ -7,11 +7,13 @@ from django.contrib.sites.models import Site
 from django.core.mail import send_mail
 from django.shortcuts import redirect, render
 from django.contrib.auth import login, get_user_model
-
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.db import transaction
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib.auth.views import LoginView, LogoutView, PasswordChangeView, PasswordResetView, \
     PasswordResetConfirmView
+from django.http import JsonResponse
 
 from .models import Profile, Feedback
 from .forms import UserUpdateForm, ProfileUpdateForm, UserRegisterForm, UserLoginForm, UserPasswordChangeForm, \
@@ -32,7 +34,8 @@ class ProfileDetailView(DetailView):
     model = Profile
     template_name = 'system/profile_detail.html'
     context_object_name = 'profile'
-    queryset = model.objects.all().select_related('user')
+    queryset = model.objects.all().select_related('user').prefetch_related('followers', 'followers__user', 'following', 'following__user')
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -281,3 +284,36 @@ def tr_handler404(request, exception):
         'title': 'Страница не найдена',
         'error_message': 'К сожалению такая страница была не найдена, или перемещена',
     })
+
+
+@method_decorator(login_required, name='dispatch')
+class ProfileFollowingCreateView(View):
+    """
+    Создание подписки для пользователя
+    """
+    model = Profile
+
+    def is_ajax(self):
+        return self.request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    def post(self, request, slug):
+        user = self.model.objects.get(slug=slug)
+        profile = request.user.profile
+        if profile in user.followers.all():
+            user.followers.remove(profile)
+            message = f'Подписаться на {user}'
+            status = False
+        else:
+            user.followers.add(profile)
+            message = f'Отписаться от {user}'
+            status = True
+        data = {
+            'username': profile.user.username,
+            'get_absolute_url': profile.get_absolute_url(),
+            'slug': profile.slug,
+            'avatar': profile.get_avatar,
+            'message': message,
+            'status': status,
+        }
+        return JsonResponse(data, status=200)
+

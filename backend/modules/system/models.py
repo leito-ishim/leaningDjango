@@ -6,6 +6,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from datetime import date, timedelta
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.core.cache import cache
 
 from modules.services.utils import unique_slugify
 
@@ -17,6 +19,7 @@ User = get_user_model()
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     slug = models.SlugField(verbose_name='URL', max_length=255, unique=True, blank=True)
+    following = models.ManyToManyField('self', verbose_name='Подписки', related_name='followers', symmetrical=False, blank=True)
     avatar = models.ImageField(
         verbose_name='Avatar',
         upload_to='images/avatars/%Y/%m/%d',
@@ -61,6 +64,12 @@ class Profile(models.Model):
         if self.avatar:
             return self.avatar.url
         return f'https://ui-avatars.com/api/?size=150&background=random&name={self.slug}'
+
+    def is_online(self):
+        last_seen = cache.get(f'last-seen-{self.user.id}')
+        if last_seen is not None and timezone.now() < last_seen + timezone.timedelta(seconds=300):
+            return True
+        return False
 
 
 @receiver(post_save, sender=User)

@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sitemaps',
-    # 'modules.blog.apps.BlogConfig',
-    'modules.blog',
+    'modules.blog.apps.BlogConfig',
+    # 'modules.blog',
     'modules.system.apps.SystemConfig',
     'modules.services',
     'mptt',
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'taggit',
     'django_recaptcha',
     'django_ckeditor_5',
+    'django_cleanup',
 ]
 
 MIDDLEWARE = [
@@ -60,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'modules.system.middleware.ActiveUserMiddleware',
 ]
 
 INTERNAL_IPS = [
@@ -259,3 +261,14 @@ CKEDITOR_5_CONFIGS = {
         }
     }
 }
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': (BASE_DIR / 'cache'),
+    }
+}
+
+AUTHENTICATION_BACKENDS = [
+    'modules.system.backends.UserModelBackend'
+]
