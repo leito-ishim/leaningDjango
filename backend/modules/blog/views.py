@@ -14,6 +14,7 @@ from .forms import ArticleCreateForm, ArticleUpdateForm, CommentCreateForm
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from ..services.utils import get_client_ip
+from .mixins import ViewCountMixin
 
 
 # Create your views here.
@@ -29,7 +30,7 @@ class ArticleListView(ListView):
         return context
 
 
-class ArticleDetailView(DetailView):
+class ArticleDetailView(ViewCountMixin, DetailView):
     model = Article
     template_name = 'blog/articles_detail.html'
     context_object_name = 'article'

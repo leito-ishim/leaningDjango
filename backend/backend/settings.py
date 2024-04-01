@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 load_dotenv()
 
@@ -261,14 +262,41 @@ CKEDITOR_5_CONFIGS = {
         }
     }
 }
+# Старые настройки кэширования
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+#         'LOCATION': (BASE_DIR / 'cache'),
+#     }
+# }
 
+# Настройки кэширования через redis
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': (BASE_DIR / 'cache'),
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': 'redis://localhost:6379',
     }
 }
 
 AUTHENTICATION_BACKENDS = [
     'modules.system.backends.UserModelBackend'
 ]
+
+# Настройки Celery
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Europe/Moscow'
+
+CELERY_BEAT_SCHEDULE = {
+    'backup_database': {
+        'task': 'modules.services.tasks.dbackup_task',  # Путь к задаче указанной в tasks
+        'schedule': crontab(hour=0, minute=0), # Резервная копия будет создаваться каждый день в полночь
+    },
+}
+

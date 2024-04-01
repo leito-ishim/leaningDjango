@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import redirect
 
 
+
 class AuthorRequiredMixin(AccessMixin):
 
     def dispatch(self, request, *args, **kwargs):
