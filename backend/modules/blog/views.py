@@ -228,6 +228,27 @@ class RatingCreateView(View):
                 return JsonResponse({'status': 'updated', 'rating_sum': rating.article.get_sum_rating()})
         return JsonResponse({'status': 'created', 'rating_sum': rating.article.get_sum_rating()})
 
+
+class ArticleBySignedUser(LoginRequiredMixin, ListView):
+    """
+    Представление, выводящее список статей авторов, на которые подписан текущий пользователь
+    """
+    model = Article
+    template_name = 'blog/articles_list.html'
+    context_object_name = 'articles'
+    login_url = 'login'
+    paginate_by = 10
+
+    def get_queryset(self):
+        authors = self.request.user.profile.following.values_list('id', flat=True)
+        queryset = self.model.objects.all().filter(author__id__in=authors)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Статьи пользователей, на которых вы подписаны'
+        return context
+
 # Функция создавалась для реализации пагинации через функции. Сейчас не нужна, пагинация реализована в классах
 # def articles_list(request):
 #     articles = Article.objects.all()

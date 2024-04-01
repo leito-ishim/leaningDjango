@@ -6,6 +6,7 @@ from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 from urllib.parse import urljoin
 from datetime import datetime
+from PIL import Image, ImageOps
 
 
 class CkeditorCustomStorage(FileSystemStorage):
@@ -45,3 +46,18 @@ def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
     return ip
+
+
+def image_compress(image_path, height, width):
+    """
+    Оптимизация изображений
+    """
+    img = Image.open(image_path)
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    if img.height > height or img.width > width:
+        output_size = (height, width)
+        img.thumbnail(output_size)
+    img = ImageOps.exif_transpose(img)
+    img.save(image_path, format='JPEG', quality=90, optimize=True)
+

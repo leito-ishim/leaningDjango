@@ -9,7 +9,8 @@ from django_ckeditor_5.fields import CKEditor5Field
 from mptt.models import MPTTModel, TreeForeignKey
 from taggit.managers import TaggableManager
 
-from modules.services.utils import unique_slugify
+from modules.services.utils import unique_slugify, image_compress
+
 
 # Create your models here.
 
@@ -85,6 +86,11 @@ class Article(models.Model):
     def get_absolute_url(self):
         return reverse('articles_detail', kwargs={'slug': self.slug})
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__thumbnail = self.thumbnail if self.pk else None
+
+
     def save(self, *args, **kwargs):
         """
         Сохранение полей модели при отсутствии их заполнения
@@ -92,6 +98,9 @@ class Article(models.Model):
         if not self.slug:
             self.slug = unique_slugify(self, self.title)
         super().save(*args, **kwargs)
+
+        if self.__thumbnail != self.thumbnail and self.thumbnail:
+            image_compress(self.thumbnail.path, width=500, height=500)
 
     def get_sum_rating(self):
         return sum([rating.value for rating in self.ratings.all()])
