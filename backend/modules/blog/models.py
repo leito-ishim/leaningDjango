@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth import get_user_model
@@ -108,6 +110,13 @@ class Article(models.Model):
         Возращает количество просмотров для данной статьи
         """
         return self.views.count()
+
+    def get_today_view_count(self):
+        """
+        Возвращает количество просмотров для данной статьи за сегодняшний день
+        """
+        today = date.today()
+        return self.views.filter(viewed_on__date=today).count()
 
 
 class Category(MPTTModel):
