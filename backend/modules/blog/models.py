@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth import get_user_model
@@ -10,7 +12,6 @@ from mptt.models import MPTTModel, TreeForeignKey
 from taggit.managers import TaggableManager
 
 from modules.services.utils import unique_slugify, image_compress
-
 
 # Create your models here.
 
@@ -31,7 +32,7 @@ class Article(models.Model):
             """
             Список статей (SQL запрос с фильтрацией для страницы списка статей)
             """
-            return self.get_queryset().select_related('author', 'category').prefetch_related('ratings').filter(
+            return self.get_queryset().select_related('author', 'category').prefetch_related('ratings', 'views').filter(
                 status='published')
 
         def detail(self):
@@ -90,7 +91,6 @@ class Article(models.Model):
         super().__init__(*args, **kwargs)
         self.__thumbnail = self.thumbnail if self.pk else None
 
-
     def save(self, *args, **kwargs):
         """
         Сохранение полей модели при отсутствии их заполнения
@@ -104,6 +104,19 @@ class Article(models.Model):
 
     def get_sum_rating(self):
         return sum([rating.value for rating in self.ratings.all()])
+
+    def get_view_count(self):
+        """
+        Возращает количество просмотров для данной статьи
+        """
+        return self.views.count()
+
+    def get_today_view_count(self):
+        """
+        Возвращает количество просмотров для данной статьи за сегодняшний день
+        """
+        today = date.today()
+        return self.views.filter(viewed_on__date=today).count()
 
 
 class Category(MPTTModel):
@@ -199,6 +212,24 @@ class Rating(models.Model):
         indexes = [models.Index(fields=['-time_create', 'value'])]
         verbose_name = 'Рейтинг'
         verbose_name_plural = 'Рейтинги'
+
+    def __str__(self):
+        return self.article.title
+
+
+class ViewCount(models.Model):
+    """
+    Модель просмотров для статей
+    """
+    article = models.ForeignKey('Article', on_delete=models.CASCADE, related_name='views')
+    ip_address = models.GenericIPAddressField(verbose_name='IP адрес')
+    viewed_on = models.DateTimeField(auto_now_add=True, verbose_name='Дата просмотра')
+
+    class Meta:
+        ordering = ('-viewed_on',)
+        indexes = [models.Index(fields=['-viewed_on'])]
+        verbose_name = 'Просмотр'
+        verbose_name_plural = 'Просмотры'
 
     def __str__(self):
         return self.article.title

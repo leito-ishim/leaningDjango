@@ -1,10 +1,10 @@
 from django.views.generic import DetailView, UpdateView, CreateView, TemplateView, View
 from django.urls import reverse_lazy
 from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes
-from django.contrib.sites.models import Site
-from django.core.mail import send_mail
+from django.utils.http import urlsafe_base64_decode
+# from django.utils.encoding import force_bytes
+# from django.contrib.sites.models import Site
+# from django.core.mail import send_mail
 from django.shortcuts import redirect, render
 from django.contrib.auth import login, get_user_model
 from django.contrib.auth.decorators import login_required
@@ -19,8 +19,9 @@ from .models import Profile, Feedback
 from .forms import UserUpdateForm, ProfileUpdateForm, UserRegisterForm, UserLoginForm, UserPasswordChangeForm, \
     UserForgotPasswordForm, UserSetNewPasswordForm, FeedbackCreateForm
 from ..services.mixins import UserIsNotAuthenticated
-from ..services.email import send_contact_email_message
+# from ..services.email import send_contact_email_message
 from ..services.utils import get_client_ip
+from ..services.tasks import send_contact_email_message_tasks, send_activate_email_message_task
 
 # Create your views here.
 
@@ -34,8 +35,8 @@ class ProfileDetailView(DetailView):
     model = Profile
     template_name = 'system/profile_detail.html'
     context_object_name = 'profile'
-    queryset = model.objects.all().select_related('user').prefetch_related('followers', 'followers__user', 'following', 'following__user')
-
+    queryset = model.objects.all().select_related('user').prefetch_related('followers', 'followers__user', 'following',
+                                                                           'following__user')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -101,17 +102,7 @@ class UserRegisterView(UserIsNotAuthenticated, CreateView):
         user.is_active = False
         user.save()
         # Функционал для отправки письма и генерации токена
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(force_bytes(user.pk))
-        activation_url = reverse_lazy('confirm_email', kwargs={'uidb64': uid, 'token': token})
-        current_site = Site.objects.get_current().domain
-        send_mail(
-            'Подтвердите свой электронный адрес',
-            f'Пожалуйста, перейдите по следующей ссылке, чтобы подтвердить свой адрес электронной почты: http://{current_site}{activation_url}',
-            'NikitaClassik@yandex.ru',
-            [user.email],
-            fail_silently=False,
-        )
+        send_activate_email_message_task.delay(user.id)
         return redirect('email_confirmation_sent')
 
 
@@ -253,7 +244,8 @@ class FeedbackCreateView(SuccessMessageMixin, CreateView):
             feedback.ip_address = get_client_ip(self.request)
             if self.request.user.is_authenticated:
                 feedback.user = self.request.user
-            send_contact_email_message(feedback.subject, feedback.email, feedback.content, feedback.ip_address, feedback.user_id)
+            send_contact_email_message_tasks.delay(feedback.subject, feedback.email, feedback.content,
+                                                   feedback.ip_address, feedback.user_id)
         return super().form_valid(form)
 
 
@@ -275,6 +267,7 @@ def tr_handler403(request, exception):
         'title': 'Ошибка доступа: 403',
         'error_message': 'Доступ к этой странице ограничен',
     })
+
 
 def tr_handler404(request, exception):
     """
@@ -316,4 +309,3 @@ class ProfileFollowingCreateView(View):
             'status': status,
         }
         return JsonResponse(data, status=200)
-
